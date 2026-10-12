@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Interface Triage - SmartUrgence CHU Charles Nicolle{% endblock %}
+
+{% block body %}
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>Poste de Triage & Orientation (IAO)</h1>
+        <p class="page-subtitle">Évaluation de la gravité, constantes vitales et attribution du code d'urgence</p>
+    </div>
+    <div>
+        <span class="badge badge-subtle-orange" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            File Triage : {{ attente_count|default(0) }} Patient(s) en attente
+        </span>
+    </div>
+</div>
+
+{% set patientSelectionne = patientSelectionne|default(patient_selectionne|default(null)) %}
+{% include 'triage/_formulaire_evaluation.html.twig' with {
+    search_action_url: path('app_triage'),
+    evaluer_action_url: patientSelectionne ? path('app_triage_evaluer', { id: patientSelectionne.idPatient }) : null,
+    patientSelectionne: patientSelectionne,
+    patient_selectionne: patientSelectionne
+} %}
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="{{ asset('js/qr-scanner.js') }}"></script>
+<script>
+const triageScanner = new SmartUrgenceScanner({
+    containerId: 'triage-qr-reader',
+    statusId: 'triage-qr-status',
+    onSuccess: (patientId) => {
+        // Redirection vers le triage du patient scanné
+        window.location.href = "{{ path('app_triage') }}?patient_id=" + encodeURIComponent(patientId);
+    }
+});
+</script>
+{% endblock %}

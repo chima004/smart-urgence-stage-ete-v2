@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Supervision Triage & Orientation - Admin SmartUrgence{% endblock %}
+
+{% block body %}
+<!-- Bandeau de Mode Supervision -->
+<div class="alert-banner alert-banner-info" style="margin-bottom: 1.5rem;">
+    <div class="alert-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span>👁️ <strong>Mode supervision</strong> — Vue en lecture seule des données du module <strong>Triage & Orientation (IAO)</strong>.</span>
+    </div>
+    <a href="{{ path('app_admin') }}" class="btn btn-sm btn-secondary">Retour Admin</a>
+</div>
+
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>Supervision : Triage & Orientation</h1>
+        <p class="page-subtitle">Suivi de la file d'attente de triage et de l'historique des attributions de gravité</p>
+    </div>
+    <div>
+        <span class="badge badge-subtle-orange" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">
+            File Triage : {{ attente_count|default(0) }} Patient(s) en attente
+        </span>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- File d'Attente de Triage (Lecture Seule, Sans Formulaire d'Évaluation) -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Patients en Attente de Triage
+            </h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Patient</th>
+                        <th>Âge / Sexe</th>
+                        <th>Heure Arrivée</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients_attente %}
+                        <tr>
+                            <td><strong>#SU-{{ patient.idPatient }}</strong></td>
+                            <td><strong>{{ patient.nom }}</strong></td>
+                            <td>{{ patient.age|default('N/A') }} ans / {{ patient.sexe|default('N/A') }}</td>
+                            <td>{{ patient.dateArrivee ? patient.dateArrivee|date('H:i') : '--:--' }}</td>
+                            <td><span class="badge badge-subtle-orange">En attente</span></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                Aucun patient en file d'attente de triage.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Historique des Patients Triés (Lecture Seule) -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Triages Récent (Lecture Seule)
+            </h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Patient</th>
+                        <th>Code Gravité</th>
+                        <th>Heure Arrivée</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients_tries %}
+                        <tr>
+                            <td><strong>#SU-{{ patient.idPatient }}</strong></td>
+                            <td>{{ patient.nom }}</td>
+                            <td>
+                                {% set grav = patient.gravite|lower %}
+                                {% if grav == 'rouge' %}
+                                    <span class="badge badge-triage-rouge">ROUGE</span>
+                                {% elseif grav == 'orange' %}
+                                    <span class="badge badge-triage-orange">ORANGE</span>
+                                {% elseif grav == 'jaune' %}
+                                    <span class="badge badge-triage-jaune">JAUNE</span>
+                                {% else %}
+                                    <span class="badge badge-triage-vert">VERT</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.dateArrivee ? patient.dateArrivee|date('H:i') : '--:--' }}</td>
+                            <td><span class="badge badge-subtle-green">{{ patient.statut }}</span></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                Aucun historique de triage disponible.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

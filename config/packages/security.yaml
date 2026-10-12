@@ -1,0 +1,49 @@
+security:
+    password_hashers:
+        App\Entity\Utilisateur:
+            algorithm: auto
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\Utilisateur
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                default_target_path: /
+            logout:
+                path: app_logout
+                target: app_login
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800 # 1 semaine
+
+    # Contrôle d'accès : qui a le droit d'aller où, selon son rôle
+    access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/coordinateur, roles: ROLE_COORDINATEUR }
+        - { path: ^/triage, roles: ROLE_TRIAGE }
+        - { path: ^/soignant, roles: ROLE_SOIGNANT }
+        - { path: ^/accueil, roles: ROLE_ACCUEIL }
+        - { path: ^/, roles: PUBLIC_ACCESS }
+
+when@test:
+    security:
+        password_hashers:
+            App\Entity\Utilisateur:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

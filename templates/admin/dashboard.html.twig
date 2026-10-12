@@ -1,0 +1,324 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration Système - SmartUrgence CHU Charles Nicolle{% endblock %}
+
+{% block body %}
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>Administration & Configuration du Système</h1>
+        <p class="page-subtitle">Gestion des comptes du personnel hospitalier et des seuils d'alerte des unités</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" onclick="openAddUserModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Ajouter un Utilisateur
+        </button>
+    </div>
+</div>
+
+<!-- Synthèse Système en Lecture Seule (Strictement sans action sur les patients) -->
+<div class="grid-2" style="gap: 1.25rem; margin-bottom: 1.5rem;">
+    <div class="card" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--primary-100); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div>
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Patients pris en charge</span>
+                <h3 style="font-size: 1.75rem; font-weight: 800; margin: 0.1rem 0 0 0; color: var(--text-main);">{{ patients_count }} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">patient(s) actif(s)</span></h3>
+            </div>
+        </div>
+        <span class="badge badge-neutral" style="font-size: 0.75rem;">Lecture seule</span>
+    </div>
+
+    <div class="card" style="display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: #FEF2F2; color: #DC2626; display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div>
+                <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Alertes Saturation Actives</span>
+                <h3 style="font-size: 1.75rem; font-weight: 800; margin: 0.1rem 0 0 0; color: var(--text-main);">{{ alertes_count }} <span style="font-size: 0.85rem; font-weight: 400; color: var(--text-muted);">alerte(s) en cours</span></h3>
+            </div>
+        </div>
+        <span class="badge badge-neutral" style="font-size: 0.75rem;">Lecture seule</span>
+    </div>
+</div>
+
+<!-- Section Supervision Globale des Modules (Lecture Seule) -->
+<div class="card" style="margin-bottom: 1.75rem; border-top: 4px solid var(--primary-600);">
+    <div class="card-header">
+        <h2 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            Supervision Globale des Modules (Lecture Seule)
+        </h2>
+        <span class="badge badge-subtle-green">Accès Admin Supervision</span>
+    </div>
+    <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Consultez en temps réel les données de chaque module métier du CHU Charles Nicolle sans pouvoir exécuter les actions cliniques réservées aux soignants.
+    </p>
+    <div class="grid-4" style="gap: 0.75rem;">
+        <a href="{{ path('app_admin_supervision_accueil') }}" class="btn btn-outline-primary" style="display: flex; flex-direction: column; align-items: center; padding: 1rem; text-align: center; gap: 0.5rem; text-decoration: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle></svg>
+            <strong>1. Accueil & Admissions</strong>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Liste des enregistrements</span>
+        </a>
+
+        <a href="{{ path('app_admin_supervision_triage') }}" class="btn btn-outline-primary" style="display: flex; flex-direction: column; align-items: center; padding: 1rem; text-align: center; gap: 0.5rem; text-decoration: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            <strong>2. Triage (IAO)</strong>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">File & codes gravité</span>
+        </a>
+
+        <a href="{{ path('app_admin_supervision_soignant') }}" class="btn btn-outline-primary" style="display: flex; flex-direction: column; align-items: center; padding: 1rem; text-align: center; gap: 0.5rem; text-decoration: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            <strong>3. Soignants par Unité</strong>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Lits & passages par zone</span>
+        </a>
+
+        <a href="{{ path('app_admin_supervision_coordinateur') }}" class="btn btn-outline-primary" style="display: flex; flex-direction: column; align-items: center; padding: 1rem; text-align: center; gap: 0.5rem; text-decoration: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line></svg>
+            <strong>4. Coordination Service</strong>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Charges & alertes globales</span>
+        </a>
+    </div>
+</div>
+
+<div class="grid-sidebar">
+    <!-- Configuration des Seuils de Saturation (Formulaire) -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Seuils des Unités
+            </h2>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Capacité maximale autorisée par unité avant le déclenchement d'alerte.
+        </p>
+
+        {% for u in unites %}
+            <form method="post" action="{{ path('app_admin_seuil_unite', { id: u.idUnite }) }}" style="margin-bottom: 1rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.75rem;">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_seuil_' ~ u.idUnite) }}">
+                <div class="form-group" style="margin-bottom: 0.5rem;">
+                    <label class="form-label" style="font-weight: 700;">Unité : {{ u.nom }}</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" name="capacite_max" class="form-control" value="{{ u.capaciteMax }}" min="1" max="200" required>
+                        <button type="submit" class="btn btn-sm btn-secondary" style="white-space: nowrap;">Modifier</button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <p style="color: var(--text-muted);">Aucune unité configurée.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Tableau de Gestion des Comptes Utilisateurs -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                Comptes Utilisateurs & Droits d'Accès
+            </h2>
+            <span class="badge badge-neutral">{{ utilisateurs|length }} Compte(s)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nom & Prénom</th>
+                        <th>Email Professionnel</th>
+                        <th>Rôle Attribué</th>
+                        <th>Unité Assignée</th>
+                        <th>Statut</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in utilisateurs %}
+                        <tr>
+                            <td><strong>{{ u.nom }} {{ u.prenom }}</strong></td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                {% set r = u.role %}
+                                {% if r == 'ROLE_ADMIN' %}
+                                    <span class="badge badge-triage-rouge">Admin Système</span>
+                                {% elseif r == 'ROLE_COORDINATEUR' %}
+                                    <span class="badge badge-subtle-red">Coordinateur</span>
+                                {% elseif r == 'ROLE_TRIAGE' %}
+                                    <span class="badge badge-subtle-orange">Infirmier Triage</span>
+                                {% elseif r == 'ROLE_SOIGNANT' %}
+                                    <span class="badge badge-subtle-green">Soignant</span>
+                                {% else %}
+                                    <span class="badge badge-neutral">Accueil</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.uniteAssignee %}
+                                    <span class="badge badge-neutral">{{ u.uniteAssignee.nom }}</span>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.actif %}
+                                    <span class="badge badge-subtle-green">Actif</span>
+                                {% else %}
+                                    <span class="badge badge-subtle-red">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <!-- Modifier -->
+                                <button type="button" class="btn btn-sm btn-secondary" 
+                                        onclick="openEditUserModal(
+                                            {{ u.idUtilisateur }}, 
+                                            '{{ u.nom|e('js') }}', 
+                                            '{{ u.prenom|e('js') }}', 
+                                            '{{ u.email|e('js') }}', 
+                                            '{{ u.role|e('js') }}', 
+                                            {{ u.uniteAssignee ? u.uniteAssignee.idUnite : 'null' }}, 
+                                            '{{ csrf_token('admin_modifier_utilisateur_' ~ u.idUtilisateur) }}'
+                                        )">
+                                    Éditer
+                                </button>
+
+                                <!-- Toggle Actif / Inactif -->
+                                <form method="post" action="{{ path('app_admin_toggle_utilisateur', { id: u.idUtilisateur }) }}" style="display: inline-block;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('admin_toggle_' ~ u.idUtilisateur) }}">
+                                    <button type="submit" class="btn btn-sm {% if u.actif %}btn-secondary{% else %}btn-success{% endif %}">
+                                        {% if u.actif %}Désactiver{% else %}Activer{% endif %}
+                                    </button>
+                                </form>
+
+                                <!-- Supprimer (Confirmation & CSRF) -->
+                                <form method="post" action="{{ path('app_admin_supprimer_utilisateur', { id: u.idUtilisateur }) }}" style="display: inline-block;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le compte {{ u.email|e('js') }} ? (La fiche personnel liée sera conservée pour l\'historique métier)');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('admin_supprimer_' ~ u.idUtilisateur) }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                Aucun utilisateur trouvé.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openAddUserModal() {
+        openModal(`
+            <div style="text-align: left;">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-600);">Ajouter un Nouvel Utilisateur</h3>
+                <form method="post" action="{{ path('app_admin_nouveau_utilisateur') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('admin_nouveau_utilisateur') }}">
+                    <div class="grid-2" style="gap: 0.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" name="nom" class="form-control" placeholder="ex: Ben Salem" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" name="prenom" class="form-control" placeholder="ex: Chokri" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email professionnel *</label>
+                        <input type="email" name="email" class="form-control" placeholder="c.bensalem@nicolle.tn" required>
+                    </div>
+                    <div class="grid-2" style="gap: 0.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Rôle Système *</label>
+                            <select name="role" class="form-select" required>
+                                <option value="ROLE_ACCUEIL">Agent Accueil</option>
+                                <option value="ROLE_TRIAGE">Infirmier Triage</option>
+                                <option value="ROLE_SOIGNANT">Personnel Soignant</option>
+                                <option value="ROLE_COORDINATEUR">Coordinateur du Service</option>
+                                <option value="ROLE_ADMIN">Administrateur Système</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unité assignée</label>
+                            <select name="id_unite" class="form-select">
+                                <option value="">— Aucune —</option>
+                                {% for u in unites %}
+                                    <option value="{{ u.idUnite }}">{{ u.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe temporaire *</label>
+                        <input type="password" name="mot_de_passe" class="form-control" value="Nicolle2026!" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full btn-lg">Créer le Compte</button>
+                </form>
+            </div>
+        `);
+    }
+
+    function openEditUserModal(id, nom, prenom, email, role, idUnite, csrfToken) {
+        const actionUrl = "{{ path('app_admin_modifier_utilisateur', { id: 'USER_ID' }) }}".replace('USER_ID', id);
+        
+        let unitOptionsHtml = '<option value="">— Aucune —</option>';
+        {% for u in unites %}
+            unitOptionsHtml += `<option value="{{ u.idUnite }}" ${idUnite == {{ u.idUnite }} ? 'selected' : ''}>{{ u.nom }}</option>`;
+        {% endfor %}
+
+        openModal(`
+            <div style="text-align: left;">
+                <h3 style="margin-bottom: 1rem; color: var(--primary-600);">Modifier le Compte Utilisateur</h3>
+                <form method="post" action="${actionUrl}">
+                    <input type="hidden" name="_token" value="${csrfToken}">
+                    <div class="grid-2" style="gap: 0.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" name="nom" class="form-control" value="${nom}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" name="prenom" class="form-control" value="${prenom}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email professionnel *</label>
+                        <input type="email" name="email" class="form-control" value="${email}" required>
+                    </div>
+                    <div class="grid-2" style="gap: 0.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">Rôle Système *</label>
+                            <select name="role" class="form-select" required>
+                                <option value="ROLE_ACCUEIL" ${role === 'ROLE_ACCUEIL' ? 'selected' : ''}>Agent Accueil</option>
+                                <option value="ROLE_TRIAGE" ${role === 'ROLE_TRIAGE' ? 'selected' : ''}>Infirmier Triage</option>
+                                <option value="ROLE_SOIGNANT" ${role === 'ROLE_SOIGNANT' ? 'selected' : ''}>Personnel Soignant</option>
+                                <option value="ROLE_COORDINATEUR" ${role === 'ROLE_COORDINATEUR' ? 'selected' : ''}>Coordinateur du Service</option>
+                                <option value="ROLE_ADMIN" ${role === 'ROLE_ADMIN' ? 'selected' : ''}>Administrateur Système</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Unité assignée</label>
+                            <select name="id_unite" class="form-select">
+                                ${unitOptionsHtml}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+                        <input type="password" name="mot_de_passe" class="form-control" placeholder="Entrez un nouveau mot de passe...">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full btn-lg">Enregistrer les Modifications</button>
+                </form>
+            </div>
+        `);
+    }
+</script>
+{% block javascripts %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Supervision Coordination - Admin SmartUrgence{% endblock %}
+
+{% block body %}
+<!-- Bandeau de Mode Supervision -->
+<div class="alert-banner alert-banner-info" style="margin-bottom: 1.5rem;">
+    <div class="alert-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <span>👁️ <strong>Mode supervision</strong> — Vue en lecture seule du tableau de bord de <strong>Coordination & Flux Multi-Agents</strong>.</span>
+    </div>
+    <a href="{{ path('app_admin') }}" class="btn btn-sm btn-secondary">Retour Admin</a>
+</div>
+
+<div class="page-header">
+    <div class="page-title-group">
+        <h1>Supervision : Coordination & Flux Hospitaliers</h1>
+        <p class="page-subtitle">Aperçu global de la saturation des lits, des alertes système et du personnel disponible</p>
+    </div>
+    <div>
+        <span class="badge badge-subtle-green" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">
+            Système Multi-Agents : Surveillé
+        </span>
+    </div>
+</div>
+
+<!-- Cartes de Statistiques Clés -->
+<div class="grid-4" style="margin-bottom: 1.75rem;">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-value">{{ patients_count|default(0) }}</span>
+            <span class="stat-label">Patients au service</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon alert">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-value" style="color: #DC2626;">{{ alertes_count|default(0) }}</span>
+            <span class="stat-label">Alertes actives</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-value">{{ alertes_actives|length > 0 ? 'ATTENTION' : 'FLUIDE' }}</span>
+            <span class="stat-label">Fluidité Globale</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-value">{{ unites|length }}</span>
+            <span class="stat-label">Unités Surveillées</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- Vue de la Charge des Unités (Barres de Progression) -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                Charge & Saturation des Unités (Temps Réel)
+            </h2>
+        </div>
+
+        {% for u in unites %}
+            {% set pct = u.capaciteMax > 0 ? ((u.chargeActuelle / u.capaciteMax) * 100)|round : 0 %}
+            <div class="unit-load-item">
+                <div class="unit-load-header">
+                    <span class="unit-name">{{ loop.index }}. {{ u.nom }}</span>
+                    <span class="unit-percentage" style="color: {% if pct >= 85 %}#EF4444{% elseif pct >= 70 %}#F59E0B{% else %}#10B981{% endif %};">
+                        {{ pct }}% ({{ u.chargeActuelle }} / {{ u.capaciteMax }} cap.)
+                        {% if pct >= 85 %} — SATURÉ{% endif %}
+                    </span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-bar {% if pct >= 85 %}danger{% elseif pct >= 70 %}warning{% else %}ok{% endif %}" style="width: {{ pct > 100 ? 100 : pct }}%;"></div>
+                </div>
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted);">Aucune unité configurée.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Personnel Disponible (Lecture Seule) -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                Personnel Médical Disponible pour Renfort
+            </h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nom & Prénom</th>
+                        <th>Rôle</th>
+                        <th>Unité Actuelle</th>
+                        <th>Disponibilité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pers in personnels_disponibles %}
+                        <tr>
+                            <td><strong>{{ pers.nom }}</strong></td>
+                            <td><span class="badge badge-neutral">{{ pers.role|default('Soignant') }}</span></td>
+                            <td>{{ pers.uniteAssignee.nom|default('Non assignée') }}</td>
+                            <td><span class="badge badge-subtle-green">Disponible</span></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                Aucun personnel disponible actuellement.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Journal des Alertes (Lecture Seule, Sans Boutons de Traitement) -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            Journal des Alertes Multi-Agents (Lecture Seule)
+        </h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID Alerte</th>
+                    <th>Horodatage</th>
+                    <th>Unité Émettrice</th>
+                    <th>Type d'Alerte</th>
+                    <th>Statut</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alerte in toutes_alertes %}
+                    <tr>
+                        <td><strong>#{{ alerte.idAlerte }}</strong></td>
+                        <td>{{ alerte.heure ? alerte.heure|date('H:i:s') : '--:--' }}</td>
+                        <td><strong>{{ alerte.unite.nom|default('Générale') }}</strong></td>
+                        <td>{{ alerte.type|default('saturation') }}</td>
+                        <td>
+                            {% if alerte.statut == 'en_cours' %}
+                                <span class="badge badge-subtle-red">En cours</span>
+                            {% else %}
+                                <span class="badge badge-subtle-green">Traitée</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <span class="badge badge-neutral">Lecture seule</span>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                            Aucune alerte enregistrée en base.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Interface Soignant - SmartUrgence CHU Charles Nicolle{% endblock %}
+
+{% block body %}
+<!-- Banner Renfort Actif -->
+{% if is_renfort and reaffectation_active %}
+    <div class="alert-banner alert-banner-danger" style="margin-bottom: 1.5rem; background-color: #FEF2F2; border: 2px solid #EF4444; border-radius: var(--radius-md); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div class="alert-content" style="display: flex; align-items: center; gap: 1rem;">
+            <div style="background: #DC2626; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div>
+                <strong style="font-size: 1rem; color: #991B1B; display: block;">⚠️ Vous êtes actuellement en renfort à l'unité [{{ unite.nom|default('Unité Cible') }}]</strong>
+                <span style="font-size: 0.9rem; color: #7F1D1D;">
+                    Unité fixe normale : <strong>{{ unite_fixe.nom|default('Unité fixe') }}</strong>
+                </span>
+            </div>
+        </div>
+        <div class="alert-actions">
+            <form method="post" action="{{ path('app_soignant_terminer_renfort', { idReaffectation: reaffectation_active.idReaffectation }) }}" style="margin: 0;">
+                <button type="submit" class="btn btn-danger" style="font-weight: 700; background: #DC2626; border-color: #B91C1C; padding: 0.6rem 1.25rem;">
+                    ✓ Terminer mon renfort
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Zone de Notification / Renfort Multi-Agents -->
+{% for reaf in reaffectations %}
+    <div class="alert-banner alert-banner-danger" style="margin-bottom: 1.5rem;">
+        <div class="alert-content">
+            <div style="background: #DC2626; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <div>
+                <strong style="font-size: 0.95rem; display: block;">ALERTE MULTI-AGENTS : Demande de Renfort URGENTE</strong>
+                <span style="font-size: 0.85rem;">
+                    L'unité <strong>{{ reaf.uniteCible.nom|default(reaf.alerte.unite.nom|default('Unité')) }}</strong> a besoin d'un renfort (Alerte #{{ reaf.alerte.idAlerte|default('--') }}).
+                    Créée à {{ reaf.heureNotification ? reaf.heureNotification|date('H:i') : '--:--' }}.
+                </span>
+            </div>
+        </div>
+        <div class="alert-actions">
+            <form method="post" action="{{ path('app_soignant_notification_reponse', { id: reaf.idReaffectation }) }}" style="display: inline-flex; gap: 0.35rem;">
+                <input type="hidden" name="reponse" value="acceptee">
+                <button type="submit" class="btn btn-sm btn-danger">Accepter Renfort</button>
+            </form>
+            <form method="post" action="{{ path('app_soignant_notification_reponse', { id: reaf.idReaffectation }) }}" style="display: inline-flex;">
+                <input type="hidden" name="reponse" value="refusee">
+                <button type="submit" class="btn btn-sm btn-secondary">Refuser</button>
+            </form>
+        </div>
+    </div>
+{% endfor %}
+
+{% for alerte in alertes %}
+    <div class="alert-banner alert-banner-warning" style="margin-bottom: 1.5rem;">
+        <div class="alert-content">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+            <span>Alerte en cours sur l'unité <strong>{{ alerte.unite.nom|default('Inconnue') }}</strong> (Type: {{ alerte.type|default('saturation') }}).</span>
+        </div>
+    </div>
+{% endfor %}
+
+{% if mode_triage_renfort %}
+    <div class="page-header">
+        <div class="page-title-group">
+            <h1>Poste Soignant d'Unité — Mode Renfort Triage</h1>
+            <p class="page-subtitle">Évaluation de la gravité, orientation des patients et gestion de la file de triage</p>
+        </div>
+        <div>
+            <span class="badge badge-subtle-orange" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                File Triage : {{ attente_count|default(0) }} Patient(s) en attente
+            </span>
+        </div>
+    </div>
+
+    {% set patientSelectionne = patientSelectionne|default(patient_selectionne|default(patients_attente|default([])|first)) %}
+    {% include 'triage/_formulaire_evaluation.html.twig' with {
+        search_action_url: path('app_soignant'),
+        evaluer_action_url: patientSelectionne ? path('app_soignant_evaluer_en_renfort', { idPatient: patientSelectionne.idPatient }) : null,
+        patientSelectionne: patientSelectionne,
+        patient_selectionne: patientSelectionne
+    } %}
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="{{ asset('js/qr-scanner.js') }}"></script>
+    <script>
+    const triageScanner = new SmartUrgenceScanner({
+        containerId: 'triage-qr-reader',
+        statusId: 'triage-qr-status',
+        onSuccess: (patientId) => {
+            window.location.href = "{{ path('app_soignant') }}?patient_id=" + encodeURIComponent(patientId);
+        }
+    });
+    </script>
+{% else %}
+    <div class="page-header">
+        <div class="page-title-group">
+            <h1>Poste Soignant d'Unité</h1>
+            <p class="page-subtitle">Suivi en temps réel des admissions, actes de soin et mouvements de sortie</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="background-color: {{ is_renfort ? '#FEF2F2' : 'var(--primary-100)' }}; color: {{ is_renfort ? '#991B1B' : 'var(--primary-700)' }}; padding: 0.6rem 1.1rem; border-radius: var(--radius-md); font-weight: 700; border: 1px solid {{ is_renfort ? '#EF4444' : 'var(--primary-600)' }};">
+                <span style="font-size: 0.75rem; text-transform: uppercase; display: block; color: var(--text-muted);">
+                    {{ is_renfort ? 'MODE RENFORT ACTIF' : 'Unité active' }}
+                </span>
+                Vous êtes affecté à : <strong style="font-size: 1.1rem; color: {{ is_renfort ? '#DC2626' : 'var(--primary-800)' }};">{{ unite.nom|default('Non assignée') }}</strong>
+                {% if is_renfort and unite_fixe %}
+                    <span style="font-size: 0.75rem; font-weight: 600; display: block; color: #7F1D1D; margin-top: 0.15rem;">(Unité fixe : {{ unite_fixe.nom }})</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-3" style="margin-bottom: 1.5rem;">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="stat-details">
+                <span class="stat-value">{{ lits_occupes|default(0) }} / {{ unite.capaciteMax|default(10) }}</span>
+                <span class="stat-label">Lits occupés dans la zone</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
+            </div>
+            <div class="stat-details">
+                <span class="stat-value">Charge : {{ unite.chargeActuelle|default(0) }}</span>
+                <span class="stat-label">Capacité max : {{ unite.capaciteMax|default(10) }}</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="stat-details">
+                <span class="stat-value">
+                    {% if unite and unite.estSature() %}
+                        SATURÉ
+                    {% else %}
+                        NORMAL
+                    {% endif %}
+                </span>
+                <span class="stat-label">État de l'Unité</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des Patients Présents dans l'Unité -->
+    <div class="card">
+        <div class="card-header" style="flex-wrap: wrap; gap: 0.5rem;">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                Patients actuellement dans l'Unité ({{ unite.nom|default('Générale') }})
+            </h2>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="soignantScanner.toggle()">
+                📷 Scanner QR Patient (Sortie)
+            </button>
+        </div>
+
+        <!-- Zone Scanner Caméra Vidéo -->
+        <div id="soignant-qr-reader" style="display: none; margin: 1rem; border-radius: 8px; overflow: hidden; border: 2px dashed var(--primary-600);"></div>
+        <div id="soignant-qr-status" style="margin: 0 1rem 0.5rem 1rem;"></div>
+
+        <!-- Formulaire caché de soumission automatique après scan -->
+        <form id="soignantScanForm" method="post" action="{{ path('app_soignant_scan_sortie') }}" style="display: none;">
+            <input type="hidden" name="patient_id" id="soignant_scanned_patient_id">
+        </form>
+
+        <!-- Saisie Manuelle de Secours -->
+        <div style="background-color: var(--bg-subtle); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Saisie manuelle secours (Sortie) :</span>
+            <form method="post" action="{{ path('app_soignant_scan_sortie') }}" style="display: flex; gap: 0.35rem; flex: 1;">
+                <input type="number" name="patient_id" class="form-control form-control-sm" placeholder="ID Patient (ex: 42)" style="width: 160px;" required>
+                <button type="submit" class="btn btn-sm btn-danger">Valider Sortie</button>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Passage N°</th>
+                        <th>Patient</th>
+                        <th>Gravité Triage</th>
+                        <th>Heure d'entrée</th>
+                        <th>Statut</th>
+                        <th style="text-align: right;">Action Scan Sortie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for passage in passages %}
+                        <tr>
+                            <td><strong style="color: var(--primary-700);">Passage #{{ passage.idPassage }}</strong></td>
+                            <td><strong>{{ passage.patient.nom|default('Inconnu') }}</strong> (#SU-{{ passage.patient.idPatient }})</td>
+                            <td>
+                                {% set grav = passage.patient.gravite|default('')|lower %}
+                                {% if grav == 'rouge' %}
+                                    <span class="badge badge-triage-rouge">ROUGE</span>
+                                {% elseif grav == 'orange' %}
+                                    <span class="badge badge-triage-orange">ORANGE</span>
+                                {% elseif grav == 'jaune' %}
+                                    <span class="badge badge-triage-jaune">JAUNE</span>
+                                {% elseif grav == 'vert' %}
+                                    <span class="badge badge-triage-vert">VERT</span>
+                                {% else %}
+                                    <span class="badge badge-neutral">Non défini</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ passage.heureEntree ? passage.heureEntree|date('H:i') : '--:--' }}</td>
+                            <td><span class="badge badge-subtle-orange">En cours de soin</span></td>
+                            <td style="text-align: right;">
+                                <form method="post" action="{{ path('app_soignant_sortie', { idPassage: passage.idPassage }) }}" style="display: inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path></svg>
+                                        Scan Sortie
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                Aucun patient en cours de prise en charge dans cette unité.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="{{ asset('js/qr-scanner.js') }}"></script>
+    <script>
+    const soignantScanner = new SmartUrgenceScanner({
+        containerId: 'soignant-qr-reader',
+        statusId: 'soignant-qr-status',
+        onSuccess: (patientId) => {
+            const input = document.getElementById('soignant_scanned_patient_id');
+            const form = document.getElementById('soignantScanForm');
+            if (input && form) {
+                input.value = patientId;
+                form.submit();
+            }
+        }
+    });
+    </script>
+{% endif %}
+{% endblock %}

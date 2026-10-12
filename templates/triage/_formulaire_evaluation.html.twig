@@ -1,0 +1,193 @@
+<div class="grid-sidebar">
+    <!-- Formulaire d'Attribution de Gravité / Triage -->
+    <div class="card">
+        <div class="card-header" style="flex-wrap: wrap; gap: 0.5rem;">
+            <h2 class="card-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                Évaluation Triage Patient
+            </h2>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="triageScanner.toggle()">
+                📷 Scanner Patient
+            </button>
+        </div>
+
+        <!-- Zone Scanner Caméra Vidéo -->
+        <div id="triage-qr-reader" style="display: none; margin: 1rem; border-radius: 8px; overflow: hidden; border: 2px dashed var(--primary-600);"></div>
+        <div id="triage-qr-status" style="margin: 0 1rem 0.5rem 1rem;"></div>
+
+        <!-- Saisie Manuelle de Secours -->
+        <div style="background-color: var(--bg-subtle); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Saisie manuelle secours :</span>
+            <form method="get" action="{{ search_action_url|default(path('app_triage')) }}" style="display: flex; gap: 0.35rem; flex: 1;">
+                <input type="number" name="patient_id" class="form-control form-control-sm" placeholder="Entrer ID Patient (ex: 42)" style="width: 160px;" required>
+                <button type="submit" class="btn btn-sm btn-secondary">Sélectionner</button>
+            </form>
+        </div>
+
+        {% set patientSelectionne = patientSelectionne|default(patient_selectionne|default(patients_attente|default([])|first)) %}
+
+        {% if patientSelectionne %}
+            <div style="background-color: var(--bg-subtle); padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; border-left: 3px solid var(--primary-600);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>{{ patientSelectionne.nom }} (#SU-{{ patientSelectionne.idPatient }})</strong>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Âge : {{ patientSelectionne.age|default('N/A') }} ans ({{ patientSelectionne.sexe|default('N/A') }})</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Date arrivée : {{ patientSelectionne.dateArrivee ? patientSelectionne.dateArrivee|date('d/m H:i') : '--:--' }}</p>
+            </div>
+
+            {% set form_action = evaluer_action_url|default(path('app_triage_evaluer', { id: patientSelectionne.idPatient })) %}
+
+            <form method="post" action="{{ form_action }}">
+                <!-- Niveaux de Gravité (Code Couleur Médical) -->
+                <div class="form-group">
+                    <label class="form-label">Code Gravité (Classification CIMU) *</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 0.4rem;">
+                        <label style="border: 2px solid var(--triage-red-badge); background-color: var(--triage-red-bg); padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="gravite" value="rouge" required>
+                            <div>
+                                <span class="badge badge-triage-rouge">ROUGE</span>
+                                <div style="font-size: 0.725rem; color: var(--triage-red-text); font-weight: 600; margin-top: 0.15rem;">Vitale / Critique (SAUV)</div>
+                            </div>
+                        </label>
+
+                        <label style="border: 2px solid var(--triage-orange-badge); background-color: var(--triage-orange-bg); padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="gravite" value="orange" required checked>
+                            <div>
+                                <span class="badge badge-triage-orange">ORANGE</span>
+                                <div style="font-size: 0.725rem; color: var(--triage-orange-text); font-weight: 600; margin-top: 0.15rem;">Urgent / Majeur (BOX)</div>
+                            </div>
+                        </label>
+
+                        <label style="border: 2px solid var(--triage-yellow-badge); background-color: var(--triage-yellow-bg); padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="gravite" value="jaune" required>
+                            <div>
+                                <span class="badge badge-triage-jaune">JAUNE</span>
+                                <div style="font-size: 0.725rem; color: var(--triage-yellow-text); font-weight: 600; margin-top: 0.15rem;">Modéré (Consultation)</div>
+                            </div>
+                        </label>
+
+                        <label style="border: 2px solid var(--triage-green-badge); background-color: var(--triage-green-bg); padding: 0.65rem; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="radio" name="gravite" value="vert" required>
+                            <div>
+                                <span class="badge badge-triage-vert">VERT</span>
+                                <div style="font-size: 0.725rem; color: var(--triage-green-text); font-weight: 600; margin-top: 0.15rem;">Léger / Benign</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Unité d'Affectation Immédiate *</label>
+                    <select name="unite_destination" class="form-select" required>
+                        <option value="SAUV">SAUV (Déchoquage / Urgence Vitale)</option>
+                        <option value="Box" selected>BOX de soins ordinaires</option>
+                        <option value="UHCD">UHCD (Hospitalisation Courte Durée)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Valider Triage & Router le Patient
+                </button>
+            </form>
+        {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <p>Aucun patient en attente de triage pour le moment.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <!-- File d'Attente à Évaluer -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary-600);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Patients en Attente de Triage
+                </h2>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ticket</th>
+                            <th>Patient</th>
+                            <th>Âge / Sexe</th>
+                            <th>Heure Arrivée</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients_attente %}
+                            <tr>
+                                <td><strong>#SU-{{ patient.idPatient }}</strong></td>
+                                <td><strong>{{ patient.nom }}</strong></td>
+                                <td>{{ patient.age|default('N/A') }} ans / {{ patient.sexe|default('N/A') }}</td>
+                                <td>{{ patient.dateArrivee ? patient.dateArrivee|date('H:i') : '--:--' }}</td>
+                                <td style="text-align: right;">
+                                    <a href="{{ search_action_url|default(path('app_triage')) }}?patient_id={{ patient.idPatient }}" class="btn btn-sm btn-outline-primary">
+                                        Sélectionner
+                                    </a>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    Aucun patient en file d'attente.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Historique des Patients Triés Aujourd'hui -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Historique des Triages Récents</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ticket</th>
+                            <th>Patient</th>
+                            <th>Code Gravité</th>
+                            <th>Heure Arrivée</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients_tries %}
+                            <tr>
+                                <td><strong>#SU-{{ patient.idPatient }}</strong></td>
+                                <td>{{ patient.nom }}</td>
+                                <td>
+                                    {% if patient.gravite|lower == 'rouge' %}
+                                        <span class="badge badge-triage-rouge">ROUGE</span>
+                                    {% elseif patient.gravite|lower == 'orange' %}
+                                        <span class="badge badge-triage-orange">ORANGE</span>
+                                    {% elseif patient.gravite|lower == 'jaune' %}
+                                        <span class="badge badge-triage-jaune">JAUNE</span>
+                                    {% else %}
+                                        <span class="badge badge-triage-vert">VERT</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ patient.dateArrivee ? patient.dateArrivee|date('H:i') : '--:--' }}</td>
+                                <td><span class="badge badge-subtle-green">{{ patient.statut }}</span></td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                                    Aucun historique de triage enregistré.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

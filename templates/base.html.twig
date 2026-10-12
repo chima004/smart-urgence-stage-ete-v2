@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartUrgence - CHU Charles Nicolle{% endblock %}</title>
+    
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="{{ asset('css/smarturgence.css') }}">
+    {% block stylesheets %}
+        {% if importmap is defined %}
+            {{ importmap('app') }}
+        {% endif %}
+    {% endblock %}
+
+    {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') ?? null %}
+    {% if frankenphp_hot_reload %}
+        <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
+        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
+        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
+    {% endif %}
+</head>
+<body>
+    {% if app.request.attributes.get('_route') != 'app_login' %}
+    {% set home_route = 'app_login' %}
+    {% if is_granted('ROLE_ADMIN') %}{% set home_route = 'app_admin' %}
+    {% elseif is_granted('ROLE_COORDINATEUR') %}{% set home_route = 'app_coordinateur' %}
+    {% elseif is_granted('ROLE_SOIGNANT') %}{% set home_route = 'app_soignant' %}
+    {% elseif is_granted('ROLE_TRIAGE') %}{% set home_route = 'app_triage' %}
+    {% elseif is_granted('ROLE_ACCUEIL') %}{% set home_route = 'app_accueil' %}
+    {% endif %}
+    <header class="app-header">
+        <div class="nav-container">
+            <a href="{{ path(home_route) }}" class="brand-logo">
+                <div class="brand-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </div>
+                <span>SmartUrgence</span>
+                <span class="hospital-tag">CHU Charles Nicolle</span>
+            </a>
+
+            <!-- Navigation par Rôle (Isolation Stricte) -->
+            <nav class="nav-links">
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_admin') }}" class="nav-link-item {% if app.request.attributes.get('_route') starts with 'app_admin' %}active{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        Administration
+                    </a>
+                {% elseif is_granted('ROLE_COORDINATEUR') %}
+                    <a href="{{ path('app_coordinateur') }}" class="nav-link-item {% if app.request.attributes.get('_route') starts with 'app_coordinateur' %}active{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        Coordination
+                    </a>
+                {% elseif is_granted('ROLE_SOIGNANT') %}
+                    <a href="{{ path('app_soignant') }}" class="nav-link-item {% if app.request.attributes.get('_route') starts with 'app_soignant' %}active{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        Soignant
+                    </a>
+                {% elseif is_granted('ROLE_TRIAGE') %}
+                    <a href="{{ path('app_triage') }}" class="nav-link-item {% if app.request.attributes.get('_route') starts with 'app_triage' %}active{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        Triage
+                    </a>
+                {% elseif is_granted('ROLE_ACCUEIL') %}
+                    <a href="{{ path('app_accueil') }}" class="nav-link-item {% if app.request.attributes.get('_route') starts with 'app_accueil' %}active{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                        Accueil
+                    </a>
+                {% endif %}
+            </nav>
+
+            <!-- Profil Utilisateur & Déconnexion -->
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="user-profile-badge">
+                    <div class="user-avatar">
+                        {% if app.user %}{{ app.user.userIdentifier|slice(0, 2)|upper }}{% else %}SU{% endif %}
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">
+                            {% if app.user %}
+                                {{ app.user.prenom ~ ' ' ~ app.user.nom }}
+                            {% else %}
+                                Personnel Médical
+                            {% endif %}
+                        </span>
+                        <span class="user-role-tag">
+                            {% if is_granted('ROLE_ADMIN') %}Administrateur
+                            {% elseif is_granted('ROLE_COORDINATEUR') %}Coordinateur Svc
+                            {% elseif is_granted('ROLE_SOIGNANT') %}Soignant
+                            {% elseif is_granted('ROLE_TRIAGE') %}Infirmier Triage
+                            {% elseif is_granted('ROLE_ACCUEIL') %}Agent Accueil
+                            {% else %}Utilisateur{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <a href="{{ path('app_logout') }}" class="btn btn-sm btn-secondary" title="Déconnexion">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Déconnexion
+                </a>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    <main class="main-content">
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert-banner alert-banner-{{ label == 'error' ? 'danger' : (label == 'warning' ? 'warning' : 'info') }}">
+                    <div class="alert-content">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <span>{{ message }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {% block body %}{% endblock %}
+    </main>
+
+    {% if app.request.attributes.get('_route') != 'app_login' %}
+    <footer class="app-footer">
+        <p><strong>SmartUrgence v1.0</strong> — Système Multi-Agents de Coordination Hospitalière | CHU Charles Nicolle (Tunis, Tunisie)</p>
+    </footer>
+    {% endif %}
+
+    <!-- Modal Universel pour QR Code & Actions -->
+    <div id="universalModal" class="modal-overlay">
+        <div class="modal-card">
+            <div id="modalContent"></div>
+            <button class="btn btn-secondary btn-full" style="margin-top: 1.25rem;" onclick="closeModal()">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+        function openModal(htmlContent) {
+            document.getElementById('modalContent').innerHTML = htmlContent;
+            document.getElementById('universalModal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('universalModal').classList.remove('active');
+        }
+        function generateQRCode(patientName, patientId) {
+            openModal(`
+                <div style="text-align: center;">
+                    <div style="width: 56px; height: 56px; background: var(--primary-100); color: var(--primary-600); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto;">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </div>
+                    <h3 style="margin-bottom: 0.25rem;">QR Code Patient</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Patient : <strong>${patientName}</strong> (${patientId})</p>
+                    
+                    <div style="background: white; border: 2px dashed var(--border-color); padding: 1.5rem; border-radius: var(--radius-md); display: inline-block; margin-bottom: 1rem;">
+                        <svg width="150" height="150" viewBox="0 0 100 100" fill="none">
+                            <rect width="100" height="100" fill="white"/>
+                            <rect x="10" y="10" width="30" height="30" fill="#0F172A"/>
+                            <rect x="15" y="15" width="20" height="20" fill="white"/>
+                            <rect x="20" y="20" width="10" height="10" fill="#9B1B30"/>
+                            
+                            <rect x="60" y="10" width="30" height="30" fill="#0F172A"/>
+                            <rect x="65" y="15" width="20" height="20" fill="white"/>
+                            <rect x="70" y="20" width="10" height="10" fill="#9B1B30"/>
+                            
+                            <rect x="10" y="60" width="30" height="30" fill="#0F172A"/>
+                            <rect x="15" y="65" width="20" height="20" fill="white"/>
+                            <rect x="20" y="70" width="10" height="10" fill="#9B1B30"/>
+                            
+                            <rect x="50" y="50" width="15" height="15" fill="#0F172A"/>
+                            <rect x="70" y="50" width="15" height="15" fill="#0F172A"/>
+                            <rect x="50" y="70" width="15" height="15" fill="#0F172A"/>
+                            <rect x="75" y="75" width="15" height="15" fill="#9B1B30"/>
+                        </svg>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Flashable par les infirmiers & soignants de l'unité.</p>
+                </div>
+            `);
+        }
+    </script>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>
